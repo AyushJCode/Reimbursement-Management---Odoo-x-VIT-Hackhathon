@@ -4,10 +4,10 @@
 A multi-tenant expense management solution designed to automate manual reimbursement processes, eliminate errors, and provide full spending transparency.
 
 ## 👥 The Team
-* [cite_start]**Tejas Joshi (Leader)** — Backend APIs & Core Logic [cite: 52]
-* [cite_start]**Ayush Jadhav** — Database & System Layer [cite: 9, 11]
-* [cite_start]**Tanvi Nirbhvane** — UI Design [cite: 56]
-* [cite_start]**Tejas Jadhav** — API Integration [cite: 55]
+* **Tejas Joshi (Leader)** — Backend APIs & Core Logic [cite: 52]
+* **Ayush Jadhav** — Database & System Layer [cite: 9, 11]
+* **Tanvi Nirbhvane** — UI Design [cite: 56]
+* **Tejas Jadhav** — API Integration [cite: 55]
 
 ## 🚀 Key Features
 * [cite_start]**Multi-Tenant Isolation**: Uses a `company_id` architecture to ensure that data for one company is never visible to another, satisfying strict data privacy. [cite: 48]
