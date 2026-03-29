@@ -3,12 +3,15 @@ from werkzeug.security import generate_password_hash
 
 def seed_data():
     conn = get_db_connection()
-    # 🔑 This is the magic part: it turns 'admin123' into a secure hash
     hashed_pw = generate_password_hash('admin123') 
     
-    conn.execute("INSERT OR IGNORE INTO companies (id, name, base_currency) VALUES (1, 'Odoo VIT Hackathon', 'INR')")
+    # 1. Seed Company first
+    conn.execute("""
+        INSERT OR IGNORE INTO companies (id, name, country, base_currency) 
+        VALUES (1, 'Odoo VIT Hackathon', 'India', 'INR')
+    """)
     
-    # We insert the HASH, not the plain text password
+    # 2. Seed Admin with the company_id
     conn.execute("""
         INSERT OR IGNORE INTO users (id, company_id, name, email, password, role) 
         VALUES (1, 1, 'Ayush Admin', 'admin@test.com', ?, 'Admin')
@@ -16,7 +19,7 @@ def seed_data():
     
     conn.commit()
     conn.close()
-    print("✅ Database Reset and Seeded with Hashed Password!")
+    print("✅ Database Seeded with New Schema!")
 
 if __name__ == "__main__":
     seed_data()
