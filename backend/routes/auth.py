@@ -8,6 +8,7 @@ auth_bp = Blueprint('auth', __name__)
 def register():
     data = request.json
 
+    # 1. Define the variables from the request
     name = data.get('name')
     email = data.get('email')
     password = data.get('password')
@@ -15,22 +16,23 @@ def register():
     if not name or not email or not password:
         return jsonify({"error": "All fields required"}), 400
 
+    # 2. Hash the password (this creates the 'hashed_password' variable)
     hashed_password = generate_password_hash(password)
 
     conn = get_db_connection()
 
     try:
+        # 3. Now use them in the query
         conn.execute(
             "INSERT INTO users (name, email, password, role, company_id) VALUES (?, ?, ?, ?, ?)",
             (name, email, hashed_password, "Employee", 1)
         )
         conn.commit()
-    except:
+    except Exception as e:
         conn.close()
-        return jsonify({"error": "User already exists"}), 400
+        return jsonify({"error": "User already exists or DB error"}), 400
 
     conn.close()
-
     return jsonify({"message": "User registered successfully"})
 
 @auth_bp.route('/login', methods=['POST'])
