@@ -1,56 +1,55 @@
+import os
 from flask import Blueprint, request, jsonify
+from werkzeug.utils import secure_filename
 from db import get_db_connection
 from helpers.currency import convert_currency
 
-# Define the Blueprint
 expenses_bp = Blueprint('expenses', __name__)
+
+# Configuration for file uploads
+UPLOAD_FOLDER = 'static/uploads'
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @expenses_bp.route('/add-expense', methods=['POST'])
 def add_expense():
-    data = request.json
-    user_id = data.get('user_id')
-    amount = data.get('amount')
-    currency = data.get('currency')
-    category = data.get('category')
-    date = data.get('date')
-    description = data.get('description', '') # Added description with a default empty string
+    # Since we are sending a file, we use request.form instead of request.json
+    user_id = request.form.get('user_id')
+    amount = float(request.form.get('amount'))
+    currency = request.form.get('currency')
+    category = request.form.get('category')
+    date = request.form.get('date')
+    description = request.form.get('description', '')
+
+    # Handle File Upload
+    file = request.files.get('receipt')
+    filename = None
     
-    # 1. Fetch company base currency for this user (Keep mocked for now or fetch from DB)
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        # Create a unique path for the file
+        file_path = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(file_path)
+
+    # 1. Fetch company base currency (Mocked or DB fetch)
     base_currency = 'INR' 
     
     # 2. Convert amount
     converted_amount = convert_currency(amount, currency, base_currency)
     
-    # 3. Save to SQLite
+    # 3. Save to SQLite (Including the receipt_path)
     conn = get_db_connection()
     conn.execute('''
-        INSERT INTO expenses (user_id, amount, currency, converted_amount, category, description, date, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (user_id, amount, currency, converted_amount, category, description, date, 'Pending'))
+        INSERT INTO expenses (user_id, amount, currency, converted_amount, category, description, date, status, receipt_path)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (user_id, amount, currency, converted_amount, category, description, date, 'Pending', filename))
     
     conn.commit()
     conn.close()
     
     return jsonify({
-        "message": "Expense submitted successfully!", 
-        "converted": converted_amount
+        "message": "Expense and Receipt submitted successfully!", 
+        "receipt_saved": filename
     }), 201
-
-@expenses_bp.route('/get-history/<int:user_id>', methods=['GET'])
-def get_history(user_id):
-    """
-    Fetches all expenses for a specific user to display in the dashboard table.
-    """
-    conn = get_db_connection()
-    # Fetch rows and sort by newest date first
-    rows = conn.execute('''
-        SELECT id, amount, currency, converted_amount, category, description, date, status 
-        FROM expenses 
-        WHERE user_id = ? 
-        ORDER BY date DESC
-    ''', (user_id,)).fetchall()
-    conn.close()
-    
-    # Transform SQLite rows into a list of dictionaries for the Frontend
-    history = [dict(row) for row in rows]
-    return jsonify(history), 200
