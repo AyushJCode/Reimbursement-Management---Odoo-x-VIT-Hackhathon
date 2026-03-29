@@ -1,0 +1,77 @@
+from flask import Blueprint, request, jsonify, session
+from werkzeug.security import generate_password_hash, check_password_hash
+from db import get_db_connection
+
+auth_bp = Blueprint('auth', __name__)
+
+@auth_bp.route('/register', methods=['POST'])
+def register():
+    data = request.json
+
+    name = data.get('name')
+    email = data.get('email')
+    password = data.get('password')
+
+    if not name or not email or not password:
+        return jsonify({"error": "All fields required"}), 400
+
+    hashed_password = generate_password_hash(password)
+
+    conn = get_db_connection()
+
+    try:
+        conn.execute(
+            "INSERT INTO users (name, email, password, role, company_id) VALUES (?, ?, ?, ?, ?)",
+            (name, email, hashed_password, "Employee", 1)
+        )
+        conn.commit()
+    except:
+        conn.close()
+        return jsonify({"error": "User already exists"}), 400
+
+    conn.close()
+
+    return jsonify({"message": "User registered successfully"})
+
+@auth_bp.route('/login', methods=['POST'])
+def login():
+    data = request.json
+
+    email = data.get('email')
+    password = data.get('password')
+
+    conn = get_db_connection()
+    user = conn.execute(
+        "SELECT * FROM users WHERE email=?",
+        (email,)
+    ).fetchone()
+    conn.close()
+
+    if user and check_password_hash(user['password'], password):
+        session['user_id'] = user['id']
+        session['role'] = user['role']
+
+        return jsonify({
+            "message": "Login successful",
+            "user_id": user['id'],
+            "role": user['role']
+        })
+
+    return jsonify({"error": "Invalid credentials"}), 401
+
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return jsonify({"message": "Logged out successfully"})
+
+@auth_bp.route('/me', methods=['GET'])
+def get_current_user():
+    if 'user_id' not in session:
+        return jsonify({"error": "Not logged in"}), 401
+
+    return jsonify({
+        "user_id": session['user_id'],
+        "role": session['role']
+    })
+
+
