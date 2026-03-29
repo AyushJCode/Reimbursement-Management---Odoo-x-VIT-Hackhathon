@@ -1,18 +1,23 @@
+import os
 from flask import Flask
 from routes.expenses import expenses_bp
-import os
+from routes.auth import auth_bp # We pre-register this for Tejas
 
 app = Flask(__name__)
 
-# This tells Flask where to find your uploaded images
+# 🔑 ADDED THIS: Necessary for session management (Login/Logout)
+app.secret_key = 'supersecretkey' 
+
+# File upload configuration
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
-# Register your blueprint
+# Register Blueprints
 app.register_blueprint(expenses_bp)
+app.register_blueprint(auth_bp)
 
 if __name__ == "__main__":
-    # Ensure the upload directory exists before starting
-    if not os.path.exists('static/uploads'):
-        os.makedirs('static/uploads')
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
         
+    print("🚀 Backend is live at http://127.0.0.1:5000")
     app.run(debug=True, port=5000)
