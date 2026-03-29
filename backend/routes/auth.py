@@ -15,6 +15,9 @@ def register():
     if not name or not email or not password:
         return jsonify({"error": "All fields required"}), 400
 
+    if "@" not in email:
+        return jsonify({"error": "Invalid email format"}), 400
+    
     hashed_password = generate_password_hash(password)
 
     conn = get_db_connection()
