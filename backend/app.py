@@ -1,17 +1,17 @@
 import os
 from flask import Flask
 from routes.expenses import expenses_bp
-from routes.auth import auth_bp  # Pre-importing his work
+from routes.auth import auth_bp # We pre-register this for Tejas
 
 app = Flask(__name__)
 
-# REQUIRED for Tejas to use Flask Sessions (Login/Logout)
-app.secret_key = 'odoo-vit-hackathon-2026-key'
+# 🔑 ADDED THIS: Necessary for session management (Login/Logout)
+app.secret_key = 'supersecretkey' 
 
-# Upload settings
+# File upload configuration
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
-# Register both parts of the app
+# Register Blueprints
 app.register_blueprint(expenses_bp)
 app.register_blueprint(auth_bp)
 
